@@ -169,3 +169,4 @@ project-folder
 Conclusion
 
 This project demonstrates a complete manual software testing process, including requirement analysis, test planning, test case development, test execution, and defect reporting using Jira.
+Rezwanul Rimel
