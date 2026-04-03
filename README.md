@@ -1,172 +1,88 @@
-Website Testing Project
-Project Overview
+# 🌐 Comprehensive Website Testing Project
 
-This repository contains the Software Quality Assurance (SQA) documentation for manual testing performed on a live web application.
+![Manual Testing](https://img.shields.io/badge/Testing-Manual-blue?style=for-the-badge)
+![Jira](https://img.shields.io/badge/Bug%20Tracking-Jira-0052CC?style=for-the-badge&logo=jira)
+![Status](https://img.shields.io/badge/Status-Completed-success?style=for-the-badge)
 
-The objective of this project is to demonstrate the complete manual testing workflow, starting from requirement analysis to bug reporting. The project includes structured documentation such as SRS, Test Plan, Test Cases, and Bug Reports, along with issue tracking using Jira.
+This repository documents the full **Software Quality Assurance (SQA)** lifecycle for a live web application. From requirement analysis to final bug reporting, it showcases a professional manual testing workflow.
 
-Tested Website:
-https://symphonious-pudding-1475cf.netlify.app/
+---
 
-QA Activities Performed
+## 🔗 Project Links
+*   **🌍 Live Website:** [Symphonious Pudding App](https://symphonious-pudding-1475cf.netlify.app/)
+*   **📋 Test Management:** [Google Sheets / Excel Link](https://docs.google.com/spreadsheets/d/your-link) *(Optional)*
 
-During the testing process, the following activities were completed:
+---
 
-Requirement Analysis
+## 🎯 Project Overview
+The primary objective of this project is to demonstrate a structured approach to manual testing. It includes the creation of industry-standard artifacts like **SRS, Test Plan, Test Cases, and Bug Reports**, ensuring the application meets its functional and usability goals.
 
-Software Requirement Specification (SRS) Preparation
+---
 
-Test Planning
+## 🧪 QA Activities & Scope
 
-Test Case Design
+### **Core Activities:**
+*   **Requirement Analysis:** Deep dive into the SRS to understand system behavior.
+*   **Test Planning:** Defining strategy, environment, and exit criteria.
+*   **Test Case Design:** Creating high-coverage scenarios (Positive & Negative).
+*   **Defect Management:** Identification, reporting, and tracking issues in **Jira**.
 
-Test Execution
+### **Testing Areas:**
+*   **Functional Testing:** Validating core features and business logic.
+*   **UI/UX & Navigation:** Ensuring a smooth and intuitive user flow.
+*   **Responsive Testing:** Verifying layout across various screen sizes.
+*   **Form Validation:** Testing input fields for edge cases and error handling.
 
-Bug Identification
+---
 
-Bug Reporting in Jira
+## 📄 Testing Artifacts
 
-Testing Scope
+| Artifact | Description | Location |
+| :--- | :--- | :--- |
+| **SRS Document** | Detailed system requirements and functional flow. | [`/docs/SRS`](./docs/SRS) |
+| **Test Plan** | Strategy, scope, and test environment details. | [`/docs/TestPlan`](./docs/TestPlan) |
+| **Test Cases** | Comprehensive matrix with steps and expected results. | [`/test-cases/`](./test-cases/) |
+| **Bug Reports** | Structured defect logs with severity and repro steps. | [`/bug-reports/`](./bug-reports/) |
 
-The testing focused on validating the core functionality and usability of the website.
+---
 
-Areas covered during testing include:
+## 🛠 Tools Used
 
-Website functionality
+*   **Manual Testing:** Exploratory & Scripted Testing.
+*   **Bug Tracking:** **Jira** (Issue tracking & Status monitoring).
+*   **Management:** Microsoft Excel / Google Sheets.
+*   **Debugging:** Browser Developer Tools (Chrome DevTools).
 
-User interface behavior
+---
 
-Navigation flow
+## 📂 Repository Structure
 
-Form validation
+```text
+├── 📂 docs
+│   ├── 📄 SRS_Analysis.pdf
+│   └── 📄 QA_Test_Plan.pdf
+├── 📂 test-cases
+│   └── 📊 Functional_Test_Cases.xlsx
+├── 📂 bug-reports
+│   ├── 🐞 Bug_Report_Summary.pdf
+│   └── 📂 Screenshots
+└── 📄 README.md
+```
 
-Responsiveness across devices
+---
 
-Error handling
+## 📈 Conclusion
+This project serves as a practical example of the **Software Testing Life Cycle (STLC)**. By following a systematic approach, I ensured that all identified bugs were documented with clear evidence, contributing to a more stable and user-friendly web application.
 
-All tests were conducted using manual testing techniques.
+---
 
-Testing Artifacts
+## 👤 Author
 
-This repository includes the following testing documents.
+**Rezwanul Islam**
+*SQA Engineer | Manual & Automation Specialist*
 
-Software Requirement Specification (SRS)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/rezwanulrimel/)
+[![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/rezwanulislamrimel)
 
-The SRS document describes the system requirements and expected behavior of the application.
-
-Contents include:
-
-System Overview
-
-Functional Requirements
-
-Non-Functional Requirements
-
-User Interactions
-
-Location:
-
-docs/SRS
-Test Plan
-
-The Test Plan defines the overall testing strategy and approach for the project.
-
-It includes:
-
-Testing Objectives
-
-Scope of Testing
-
-Test Environment
-
-Entry and Exit Criteria
-
-Testing Schedule
-
-Location:
-
-docs/TestPlan
-Test Cases
-
-Test cases were designed to verify key functionalities of the application.
-
-Each test case includes:
-
-Test Case ID
-
-Feature Name
-
-Test Steps
-
-Expected Result
-
-Actual Result
-
-Test Status
-
-Location:
-
-test-cases/
-Bug Reports
-
-All identified defects were documented in structured bug reports.
-
-Each bug report contains:
-
-Bug ID
-
-Bug Title
-
-Steps to Reproduce
-
-Expected Result
-
-Actual Result
-
-Severity Level
-
-Bug Status
-
-Location:
-
-bug-reports/
-Jira Bug Tracking
-
-All detected issues were also reported using Jira for proper issue tracking and management.
-
-Jira reports include:
-
-Detailed reproduction steps
-
-Severity classification
-
-Status tracking
-
-Tools Used
-
-The following tools were used during the testing process:
-
-Manual Testing
-
-Jira (Bug Tracking)
-
-Browser Developer Tools
-
-Microsoft Excel / Google Sheets (Test Case Management)
-
-Project Structure
-project-folder
-│
-├── docs
-│   ├── SRS
-│   └── TestPlan
-│
-├── test-cases
-│
-├── bug-reports
-│
-└── README.md
-Conclusion
-
-This project demonstrates a complete manual software testing process, including requirement analysis, test planning, test case development, test execution, and defect reporting using Jira.
-Rezwanul Rimel
+---
+*Maintained by Rezwanul Rimel © 2026*
