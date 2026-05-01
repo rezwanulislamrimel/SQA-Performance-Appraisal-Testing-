@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SQA Performance Appraisal — Test Report</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0f1a;
+    --surface: #111827;
+    --card: #161e2e;
+    --border: #1e2d45;
+    --pass: #00e5a0;
+    --pass-dim: rgba(0,229,160,0.12);
+    --fail: #ff4d6d;
+    --fail-dim: rgba(255,77,109,0.12);
+    --accent: #3b82f6;
+    --accent2: #f59e0b;
+    --accent3: #a855f7;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --header: #f8fafc;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* NOISE OVERLAY */
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events:none; z-index:0;
+  }
+
+  /* ── HEADER ── */
+  .page-header {
+    position: relative;
+    padding: 48px 48px 32px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(135deg, #0b0f1a 0%, #0f172a 60%, #1a0533 100%);
+    overflow: hidden;
+  }
+  .page-header::after {
+    content:'';
+    position:absolute; top:-60px; right:-60px;
+    width:320px; height:320px;
+    background: radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 70%);
+    border-radius:50%;
+  }
+  .badge {
+    display:inline-block;
+    font-family:'Space Mono', monospace;
+    font-size:10px; letter-spacing:3px; text-transform:uppercase;
+    color:var(--accent); border:1px solid var(--accent);
+    padding:4px 12px; border-radius:2px; margin-bottom:16px;
+  }
+  .page-header h1 {
+    font-size: clamp(28px,4vw,48px);
+    font-weight:800; color:var(--header); line-height:1.1;
+    letter-spacing:-1px;
+  }
+  .page-header h1 span { color:var(--accent); }
+  .meta-row {
+    display:flex; flex-wrap:wrap; gap:24px; margin-top:20px;
+  }
+  .meta-item {
+    font-family:'Space Mono', monospace;
+    font-size:11px; color:var(--muted);
+    display:flex; align-items:center; gap:6px;
+  }
+  .meta-item strong { color:var(--text); }
+
+  /* ── LAYOUT ── */
+  .content { padding: 40px 48px; position:relative; z-index:1; }
+
+  /* ── STAT CARDS ── */
+  .stats-grid {
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+    gap:16px; margin-bottom:40px;
+  }
+  .stat-card {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:12px; padding:24px 20px;
+    position:relative; overflow:hidden;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .stat-card:hover { transform:translateY(-3px); border-color:var(--accent); }
+  .stat-card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:3px;
+  }
+  .stat-card.total::before { background:var(--accent); }
+  .stat-card.passed::before { background:var(--pass); }
+  .stat-card.failed::before { background:var(--fail); }
+  .stat-card.rate::before { background:var(--accent3); }
+  .stat-card.modules::before { background:var(--accent2); }
+  .stat-label {
+    font-size:11px; letter-spacing:2px; text-transform:uppercase;
+    color:var(--muted); font-family:'Space Mono',monospace; margin-bottom:10px;
+  }
+  .stat-value {
+    font-size:42px; font-weight:800; line-height:1;
+    font-family:'Space Mono',monospace;
+  }
+  .stat-card.total .stat-value { color:var(--accent); }
+  .stat-card.passed .stat-value { color:var(--pass); }
+  .stat-card.failed .stat-value { color:var(--fail); }
+  .stat-card.rate .stat-value { color:var(--accent3); }
+  .stat-card.modules .stat-value { color:var(--accent2); }
+  .stat-sub { font-size:12px; color:var(--muted); margin-top:6px; }
+
+  /* ── SECTION TITLE ── */
+  .section-title {
+    font-size:13px; letter-spacing:3px; text-transform:uppercase;
+    color:var(--accent); font-family:'Space Mono',monospace;
+    margin-bottom:20px; display:flex; align-items:center; gap:12px;
+  }
+  .section-title::after { content:''; flex:1; height:1px; background:var(--border); }
+
+  /* ── CHARTS ROW ── */
+  .charts-row {
+    display:grid; grid-template-columns:1fr 1fr 1fr;
+    gap:20px; margin-bottom:40px;
+  }
+  @media(max-width:900px){ .charts-row{ grid-template-columns:1fr; } }
+
+  .chart-card {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:12px; padding:24px;
+  }
+  .chart-title {
+    font-size:12px; letter-spacing:2px; text-transform:uppercase;
+    color:var(--muted); font-family:'Space Mono',monospace; margin-bottom:20px;
+  }
+
+  /* Donut Chart */
+  .donut-wrap { display:flex; flex-direction:column; align-items:center; gap:20px; }
+  .donut-svg { width:160px; height:160px; }
+  .donut-legend { width:100%; }
+  .legend-item { display:flex; align-items:center; gap:8px; margin-bottom:8px; font-size:13px; }
+  .legend-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .legend-label { flex:1; color:var(--text); }
+  .legend-val { font-family:'Space Mono',monospace; font-weight:700; }
+
+  /* Bar Chart */
+  .bar-chart { display:flex; flex-direction:column; gap:10px; }
+  .bar-row { display:flex; align-items:center; gap:12px; }
+  .bar-label { font-size:11px; color:var(--muted); font-family:'Space Mono',monospace; width:110px; flex-shrink:0; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; }
+  .bar-track { flex:1; background:var(--border); border-radius:4px; height:14px; position:relative; overflow:hidden; }
+  .bar-fill { height:100%; border-radius:4px; position:relative; }
+  .bar-fill::after { content:attr(data-val); position:absolute; right:6px; top:50%; transform:translateY(-50%); font-size:9px; font-family:'Space Mono',monospace; color:#fff; font-weight:700; }
+
+  /* Heatmap */
+  .heatmap-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:6px; }
+  .heat-cell {
+    aspect-ratio:1; border-radius:4px; display:flex; align-items:center; justify-content:center;
+    font-size:9px; font-family:'Space Mono',monospace; font-weight:700;
+    cursor:default; transition:transform 0.15s;
+  }
+  .heat-cell:hover { transform:scale(1.1); z-index:2; }
+  .heat-cell.pass { background:var(--pass-dim); color:var(--pass); border:1px solid rgba(0,229,160,0.3); }
+  .heat-cell.fail { background:var(--fail-dim); color:var(--fail); border:1px solid rgba(255,77,109,0.3); }
+  .heat-label { font-size:10px; color:var(--muted); margin-bottom:8px; font-family:'Space Mono',monospace; }
+
+  /* ── MODULE STATUS GRID ── */
+  .module-grid {
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:16px; margin-bottom:40px;
+  }
+  .module-card {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:10px; padding:20px;
+  }
+  .module-name {
+    font-size:14px; font-weight:700; margin-bottom:12px; color:var(--header);
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .module-bar-track { background:var(--border); border-radius:8px; height:8px; margin-bottom:10px; overflow:hidden; }
+  .module-bar-fill { height:100%; border-radius:8px; }
+  .module-counts { display:flex; gap:12px; font-family:'Space Mono',monospace; font-size:11px; }
+  .mc-pass { color:var(--pass); }
+  .mc-fail { color:var(--fail); }
+
+  /* ── PRIORITY MATRIX ── */
+  .matrix-wrap { margin-bottom:40px; }
+  .matrix-grid {
+    display:grid; grid-template-columns:80px repeat(3,1fr);
+    gap:4px;
+  }
+  .mx-header, .mx-row-label, .mx-cell {
+    border-radius:6px; padding:10px 8px;
+    text-align:center; font-size:11px;
+    font-family:'Space Mono',monospace;
+  }
+  .mx-header { background:var(--border); color:var(--muted); font-weight:700; }
+  .mx-row-label { background:var(--border); color:var(--muted); display:flex; align-items:center; justify-content:center; }
+  .mx-cell { font-weight:700; color:#fff; }
+  .mx-cell.high-fail { background:rgba(255,77,109,0.8); }
+  .mx-cell.med-fail { background:rgba(255,77,109,0.4); }
+  .mx-cell.low-fail { background:rgba(255,77,109,0.2); color:var(--fail); }
+  .mx-cell.high-pass { background:rgba(0,229,160,0.7); color:#001a0d; }
+  .mx-cell.med-pass { background:rgba(0,229,160,0.35); color:var(--pass); }
+  .mx-cell.low-pass { background:rgba(0,229,160,0.15); color:var(--pass); }
+  .mx-cell.empty { background:var(--surface); color:var(--muted); font-size:10px; }
+  .matrix-legend { display:flex; gap:20px; margin-top:12px; flex-wrap:wrap; }
+  .ml-item { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--muted); }
+  .ml-dot { width:12px; height:12px; border-radius:3px; }
+
+  /* ── BUG SUMMARY ── */
+  .bugs-row { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:40px; }
+  @media(max-width:700px){ .bugs-row{ grid-template-columns:1fr; } }
+  .bug-card { background:var(--card); border:1px solid var(--fail-dim); border-radius:12px; padding:24px; }
+  .bug-card h3 { font-size:12px; letter-spacing:2px; text-transform:uppercase; color:var(--fail); font-family:'Space Mono',monospace; margin-bottom:16px; }
+  .bug-item {
+    display:flex; align-items:flex-start; gap:10px;
+    padding:10px 0; border-bottom:1px solid var(--border);
+    font-size:13px;
+  }
+  .bug-item:last-child { border-bottom:none; }
+  .bug-id { font-family:'Space Mono',monospace; font-size:10px; background:var(--fail-dim); color:var(--fail); padding:2px 6px; border-radius:3px; flex-shrink:0; margin-top:1px; }
+  .bug-desc { color:var(--text); line-height:1.4; }
+
+  /* ── MAIN TABLE ── */
+  .table-wrap { overflow-x:auto; border-radius:12px; border:1px solid var(--border); margin-bottom:60px; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  thead tr { background: linear-gradient(90deg, #1a2540, #0f172a); }
+  th {
+    padding:14px 16px; text-align:left;
+    font-family:'Space Mono',monospace; font-size:10px;
+    letter-spacing:2px; text-transform:uppercase;
+    color:var(--muted); border-bottom:2px solid var(--border);
+    white-space:nowrap;
+  }
+  td { padding:12px 16px; border-bottom:1px solid var(--border); vertical-align:top; line-height:1.5; }
+  tr:last-child td { border-bottom:none; }
+  tr:hover td { background:rgba(255,255,255,0.02); }
+  .tc-id { font-family:'Space Mono',monospace; font-size:11px; color:var(--accent); font-weight:700; white-space:nowrap; }
+  .module-tag {
+    display:inline-block; font-size:10px; font-family:'Space Mono',monospace;
+    padding:2px 8px; border-radius:3px; font-weight:700;
+    white-space:nowrap;
+  }
+  .tag-login { background:rgba(59,130,246,0.15); color:#60a5fa; border:1px solid rgba(59,130,246,0.3); }
+  .tag-newuser { background:rgba(168,85,247,0.15); color:#c084fc; border:1px solid rgba(168,85,247,0.3); }
+  .tag-forgot { background:rgba(245,158,11,0.15); color:#fbbf24; border:1px solid rgba(245,158,11,0.3); }
+  .tag-appraisal { background:rgba(236,72,153,0.15); color:#f472b6; border:1px solid rgba(236,72,153,0.3); }
+  .tag-goals { background:rgba(16,185,129,0.15); color:#34d399; border:1px solid rgba(16,185,129,0.3); }
+  .tag-home { background:rgba(14,165,233,0.15); color:#38bdf8; border:1px solid rgba(14,165,233,0.3); }
+  .tag-employee { background:rgba(249,115,22,0.15); color:#fb923c; border:1px solid rgba(249,115,22,0.3); }
+  .tag-verify { background:rgba(6,182,212,0.15); color:#22d3ee; border:1px solid rgba(6,182,212,0.3); }
+
+  .status-badge {
+    display:inline-flex; align-items:center; gap:5px;
+    font-family:'Space Mono',monospace; font-size:10px; font-weight:700;
+    padding:3px 10px; border-radius:20px; letter-spacing:1px;
+  }
+  .s-pass { background:var(--pass-dim); color:var(--pass); border:1px solid rgba(0,229,160,0.3); }
+  .s-fail { background:var(--fail-dim); color:var(--fail); border:1px solid rgba(255,77,109,0.3); }
+  .s-dot { width:6px; height:6px; border-radius:50%; }
+  .s-pass .s-dot { background:var(--pass); }
+  .s-fail .s-dot { background:var(--fail); }
+
+  .sev-badge {
+    font-size:9px; font-family:'Space Mono',monospace; font-weight:700;
+    padding:2px 6px; border-radius:3px; letter-spacing:1px;
+  }
+  .sev-critical { background:rgba(239,68,68,0.2); color:#f87171; }
+  .sev-major { background:rgba(245,158,11,0.2); color:#fbbf24; }
+  .sev-minor { background:rgba(59,130,246,0.2); color:#93c5fd; }
+  .sev-low { background:rgba(100,116,139,0.2); color:#94a3b8; }
+
+  .prio-badge {
+    font-size:9px; font-family:'Space Mono',monospace;
+    padding:2px 6px; border-radius:3px;
+  }
+  .prio-high { background:rgba(239,68,68,0.15); color:#fca5a5; }
+  .prio-med { background:rgba(245,158,11,0.15); color:#fde68a; }
+  .prio-low { background:rgba(148,163,184,0.15); color:#94a3b8; }
+
+  td.desc-col { max-width:200px; }
+  td.steps-col { max-width:220px; color:var(--muted); font-size:12px; }
+  td.result-col { max-width:220px; }
+  td.actual-col { max-width:200px; font-size:12px; color:var(--muted); }
+
+  /* FOOTER */
+  .footer {
+    text-align:center; padding:30px; border-top:1px solid var(--border);
+    font-family:'Space Mono',monospace; font-size:11px; color:var(--muted);
+  }
+  .footer strong { color:var(--accent); }
+
+  /* SCROLL ANIMATION */
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(20px); }
+    to { opacity:1; transform:translateY(0); }
+  }
+  .animate { animation: fadeUp 0.5s ease both; }
+  .delay-1 { animation-delay:0.1s; }
+  .delay-2 { animation-delay:0.2s; }
+  .delay-3 { animation-delay:0.3s; }
+  .delay-4 { animation-delay:0.4s; }
+
+  /* PROGRESS RING ANIMATION */
+  @keyframes dash {
+    from { stroke-dashoffset: 339.3; }
+  }
+  .ring-progress { animation: dash 1.2s ease-out forwards; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════ HEADER ══════════════════════ -->
+<div class="page-header">
+  <div class="badge">QA Test Report · v1.0</div>
+  <h1>SQA Performance <span>Appraisal</span><br>Test Execution Report</h1>
+  <div class="meta-row">
+    <div class="meta-item">🌐 <strong>URL:</strong> symphonious-pudding-1475cf.netlify.app</div>
+    <div class="meta-item">🧪 <strong>Environment:</strong> Chrome 145 / Windows 11</div>
+    <div class="meta-item">👤 <strong>Tester:</strong> Rezwanul</div>
+    <div class="meta-item">📅 <strong>Date:</strong> 03.03.2026</div>
+    <div class="meta-item">🔐 <strong>Admin:</strong> admin@example.com</div>
+    <div class="meta-item">👥 <strong>User:</strong> abc@gmail.com</div>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- ══════════════════════ KPI CARDS ══════════════════════ -->
+  <div class="section-title">Executive Summary</div>
+  <div class="stats-grid animate">
+    <div class="stat-card total">
+      <div class="stat-label">Total Cases</div>
+      <div class="stat-value">37</div>
+      <div class="stat-sub">Full test coverage</div>
+    </div>
+    <div class="stat-card passed">
+      <div class="stat-label">Passed</div>
+      <div class="stat-value">24</div>
+      <div class="stat-sub">Functioning correctly</div>
+    </div>
+    <div class="stat-card failed">
+      <div class="stat-label">Failed</div>
+      <div class="stat-value">13</div>
+      <div class="stat-sub">Require attention</div>
+    </div>
+    <div class="stat-card rate">
+      <div class="stat-label">Pass Rate</div>
+      <div class="stat-value">65%</div>
+      <div class="stat-sub">Below threshold (80%)</div>
+    </div>
+    <div class="stat-card modules">
+      <div class="stat-label">Modules</div>
+      <div class="stat-value">8</div>
+      <div class="stat-sub">Distinct feature areas</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ CHARTS ══════════════════════ -->
+  <div class="section-title delay-1 animate">Visual Analytics</div>
+  <div class="charts-row animate delay-2">
+
+    <!-- Donut -->
+    <div class="chart-card">
+      <div class="chart-title">Pass / Fail Ratio</div>
+      <div class="donut-wrap">
+        <svg class="donut-svg" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="54" fill="none" stroke="#1e2d45" stroke-width="14"/>
+          <!-- PASS arc: 24/37 = 64.9% of 339.29 = 220.2 -->
+          <circle cx="60" cy="60" r="54" fill="none" stroke="#00e5a0" stroke-width="14"
+            stroke-dasharray="220.2 339.3" stroke-dashoffset="84.8" stroke-linecap="round" class="ring-progress"/>
+          <!-- FAIL arc -->
+          <circle cx="60" cy="60" r="54" fill="none" stroke="#ff4d6d" stroke-width="14"
+            stroke-dasharray="119.1 339.3" stroke-dashoffset="-135.4" stroke-linecap="round"/>
+          <text x="60" y="55" text-anchor="middle" fill="#e2e8f0" font-size="18" font-family="Space Mono" font-weight="700">65%</text>
+          <text x="60" y="72" text-anchor="middle" fill="#64748b" font-size="9" font-family="Space Mono">PASS RATE</text>
+        </svg>
+        <div class="donut-legend">
+          <div class="legend-item">
+            <div class="legend-dot" style="background:var(--pass)"></div>
+            <span class="legend-label">Passed</span>
+            <span class="legend-val" style="color:var(--pass)">24</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:var(--fail)"></div>
+            <span class="legend-label">Failed</span>
+            <span class="legend-val" style="color:var(--fail)">13</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:var(--muted)"></div>
+            <span class="legend-label">Fail Rate</span>
+            <span class="legend-val" style="color:var(--fail)">35%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bar chart by module -->
+    <div class="chart-card">
+      <div class="chart-title">Failures by Module</div>
+      <div class="bar-chart">
+        <div class="bar-row">
+          <div class="bar-label">Login</div>
+          <div class="bar-track"><div class="bar-fill" style="width:22%;background:var(--fail);" data-val="2"></div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">New User</div>
+          <div class="bar-track"><div class="bar-fill" style="width:22%;background:var(--fail);" data-val="2"></div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">Forgot Pwd</div>
+          <div class="bar-track"><div class="bar-fill" style="width:11%;background:var(--fail);" data-val="1"></div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">Verify&Set Pwd</div>
+          <div class="bar-track"><div class="bar-fill" style="width:11%;background:var(--fail);" data-val="1"></div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">Employee Info</div>
+          <div class="bar-track"><div class="bar-fill" style="width:22%;background:var(--fail);" data-val="2"></div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">My Goals</div>
+          <div class="bar-track"><div class="bar-fill" style="width:55%;background:var(--fail);" data-val="5"></div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">Home Page</div>
+          <div class="bar-track"><div class="bar-fill" style="width:0%;background:var(--fail);" data-val="0"></div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">Appraisal</div>
+          <div class="bar-track"><div class="bar-fill" style="width:0%;background:var(--fail);" data-val="0"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Heatmap -->
+    <div class="chart-card">
+      <div class="chart-title">Test Case Heatmap (Pass/Fail)</div>
+      <div class="heat-label">TC_01 → TC_37 (green = pass · red = fail)</div>
+      <div class="heatmap-grid">
+        <!-- TC_01 to TC_37 status: PASS=1 FAIL=0 -->
+        <!-- 01 P, 02 P, 03 P, 04 P, 05 P, 06 P -->
+        <div class="heat-cell pass" title="TC_01 PASS">01</div>
+        <div class="heat-cell pass" title="TC_02 PASS">02</div>
+        <div class="heat-cell pass" title="TC_03 PASS">03</div>
+        <div class="heat-cell pass" title="TC_04 PASS">04</div>
+        <div class="heat-cell pass" title="TC_05 PASS">05</div>
+        <div class="heat-cell pass" title="TC_06 PASS">06</div>
+        <!-- 07 P, 08 P, 09 F, 10 F, 11 P, 12 P -->
+        <div class="heat-cell pass" title="TC_07 PASS">07</div>
+        <div class="heat-cell pass" title="TC_08 PASS">08</div>
+        <div class="heat-cell fail" title="TC_09 FAIL">09</div>
+        <div class="heat-cell fail" title="TC_10 FAIL">10</div>
+        <div class="heat-cell pass" title="TC_11 PASS">11</div>
+        <div class="heat-cell pass" title="TC_12 PASS">12</div>
+        <!-- 13 P, 14 F, 15 F, 16 P, 17 F, 18 P -->
+        <div class="heat-cell pass" title="TC_13 PASS">13</div>
+        <div class="heat-cell fail" title="TC_14 FAIL">14</div>
+        <div class="heat-cell fail" title="TC_15 FAIL">15</div>
+        <div class="heat-cell pass" title="TC_16 PASS">16</div>
+        <div class="heat-cell fail" title="TC_17 FAIL">17</div>
+        <div class="heat-cell pass" title="TC_18 PASS">18</div>
+        <!-- 19 P, 20 P, 21 P, 22 F, 23 P, 24 P -->
+        <div class="heat-cell pass" title="TC_19 PASS">19</div>
+        <div class="heat-cell pass" title="TC_20 PASS">20</div>
+        <div class="heat-cell pass" title="TC_21 PASS">21</div>
+        <div class="heat-cell fail" title="TC_22 FAIL">22</div>
+        <div class="heat-cell pass" title="TC_23 PASS">23</div>
+        <div class="heat-cell pass" title="TC_24 PASS">24</div>
+        <!-- 25 F, 26 F, 27 F, 28 P, 29 P, 30 F -->
+        <div class="heat-cell fail" title="TC_25 FAIL">25</div>
+        <div class="heat-cell fail" title="TC_26 FAIL">26</div>
+        <div class="heat-cell fail" title="TC_27 FAIL">27</div>
+        <div class="heat-cell pass" title="TC_28 PASS">28</div>
+        <div class="heat-cell pass" title="TC_29 PASS">29</div>
+        <div class="heat-cell fail" title="TC_30 FAIL">30</div>
+        <!-- 31 P, 32 P, 33 P, 34 F, 35 F, 36 P -->
+        <div class="heat-cell pass" title="TC_31 PASS">31</div>
+        <div class="heat-cell pass" title="TC_32 PASS">32</div>
+        <div class="heat-cell pass" title="TC_33 PASS">33</div>
+        <div class="heat-cell fail" title="TC_34 FAIL">34</div>
+        <div class="heat-cell fail" title="TC_35 FAIL">35</div>
+        <div class="heat-cell pass" title="TC_36 PASS">36</div>
+        <!-- 37 P -->
+        <div class="heat-cell pass" title="TC_37 PASS">37</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ MODULE STATUS ══════════════════════ -->
+  <div class="section-title animate delay-2">Module Coverage Matrix</div>
+  <div class="module-grid animate delay-3">
+    <div class="module-card">
+      <div class="module-name">Login <span style="font-size:11px;color:var(--muted)">7/9</span></div>
+      <div class="module-bar-track"><div class="module-bar-fill" style="width:78%;background:linear-gradient(90deg,var(--pass),#00b37a)"></div></div>
+      <div class="module-counts"><span class="mc-pass">✓ 7 Pass</span><span class="mc-fail">✗ 2 Fail</span></div>
+    </div>
+    <div class="module-card">
+      <div class="module-name">New User <span style="font-size:11px;color:var(--muted)">3/5</span></div>
+      <div class="module-bar-track"><div class="module-bar-fill" style="width:60%;background:linear-gradient(90deg,var(--accent2),#d97706)"></div></div>
+      <div class="module-counts"><span class="mc-pass">✓ 3 Pass</span><span class="mc-fail">✗ 2 Fail</span></div>
+    </div>
+    <div class="module-card">
+      <div class="module-name">Forgot Password <span style="font-size:11px;color:var(--muted)">2/3</span></div>
+      <div class="module-bar-track"><div class="module-bar-fill" style="width:67%;background:linear-gradient(90deg,#8b5cf6,#6d28d9)"></div></div>
+      <div class="module-counts"><span class="mc-pass">✓ 2 Pass</span><span class="mc-fail">✗ 1 Fail</span></div>
+    </div>
+    <div class="module-card">
+      <div class="module-name">Verify & Set Pwd <span style="font-size:11px;color:var(--muted)">4/5</span></div>
+      <div class="module-bar-track"><div class="module-bar-fill" style="width:80%;background:linear-gradient(90deg,var(--pass),#00b37a)"></div></div>
+      <div class="module-counts"><span class="mc-pass">✓ 4 Pass</span><span class="mc-fail">✗ 1 Fail</span></div>
+    </div>
+    <div class="module-card">
+      <div class="module-name">Employee Info <span style="font-size:11px;color:var(--muted)">1/3</span></div>
+      <div class="module-bar-track"><div class="module-bar-fill" style="width:33%;background:linear-gradient(90deg,var(--fail),#c41233)"></div></div>
+      <div class="module-counts"><span class="mc-pass">✓ 1 Pass</span><span class="mc-fail">✗ 2 Fail</span></div>
+    </div>
+    <div class="module-card">
+      <div class="module-name">My Goals &amp; Planning <span style="font-size:11px;color:var(--muted)">5/10</span></div>
+      <div class="module-bar-track"><div class="module-bar-fill" style="width:50%;background:linear-gradient(90deg,var(--fail),#c41233)"></div></div>
+      <div class="module-counts"><span class="mc-pass">✓ 5 Pass</span><span class="mc-fail">✗ 5 Fail</span></div>
+    </div>
+    <div class="module-card">
+      <div class="module-name">Home Page <span style="font-size:11px;color:var(--muted)">1/1</span></div>
+      <div class="module-bar-track"><div class="module-bar-fill" style="width:100%;background:linear-gradient(90deg,var(--pass),#00b37a)"></div></div>
+      <div class="module-counts"><span class="mc-pass">✓ 1 Pass</span><span class="mc-fail">✗ 0 Fail</span></div>
+    </div>
+    <div class="module-card">
+      <div class="module-name">Appraisal (General) <span style="font-size:11px;color:var(--muted)">2/2</span></div>
+      <div class="module-bar-track"><div class="module-bar-fill" style="width:100%;background:linear-gradient(90deg,var(--pass),#00b37a)"></div></div>
+      <div class="module-counts"><span class="mc-pass">✓ 2 Pass</span><span class="mc-fail">✗ 0 Fail</span></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ RISK MATRIX ══════════════════════ -->
+  <div class="section-title animate">Risk Priority Matrix</div>
+  <div class="matrix-wrap animate delay-1">
+    <div class="matrix-grid">
+      <div class="mx-header">IMPACT ↓<br>LIKELIHOOD →</div>
+      <div class="mx-header">LOW</div>
+      <div class="mx-header">MEDIUM</div>
+      <div class="mx-header">HIGH</div>
+
+      <div class="mx-row-label">HIGH</div>
+      <div class="mx-cell med-fail">TC_09<br><span style="font-size:8px">UI Responsive</span></div>
+      <div class="mx-cell high-fail">TC_17, TC_22<br><span style="font-size:8px">Pwd Validation</span></div>
+      <div class="mx-cell high-fail">TC_35<br><span style="font-size:8px">No Cancel Popup</span></div>
+
+      <div class="mx-row-label">MEDIUM</div>
+      <div class="mx-cell low-fail">TC_25, TC_26<br><span style="font-size:8px">Employee Info</span></div>
+      <div class="mx-cell med-fail">TC_10, TC_14<br><span style="font-size:8px">UI / Heading</span></div>
+      <div class="mx-cell high-fail">TC_27, TC_30<br><span style="font-size:8px">Goals Char/Tooltip</span></div>
+
+      <div class="mx-row-label">LOW</div>
+      <div class="mx-cell low-pass">TC_01–TC_08<br><span style="font-size:8px">Login PASS</span></div>
+      <div class="mx-cell med-pass">TC_11–TC_13<br><span style="font-size:8px">New User PASS</span></div>
+      <div class="mx-cell high-pass">TC_15, TC_34<br><span style="font-size:8px">UI Gaps</span></div>
+    </div>
+    <div class="matrix-legend">
+      <div class="ml-item"><div class="ml-dot" style="background:rgba(255,77,109,0.8)"></div>Critical Risk</div>
+      <div class="ml-item"><div class="ml-dot" style="background:rgba(255,77,109,0.4)"></div>High Risk</div>
+      <div class="ml-item"><div class="ml-dot" style="background:rgba(255,77,109,0.2)"></div>Medium Risk</div>
+      <div class="ml-item"><div class="ml-dot" style="background:rgba(0,229,160,0.7)"></div>Low Risk / Pass</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ BUG SUMMARY ══════════════════════ -->
+  <div class="section-title animate">Critical Defect Summary</div>
+  <div class="bugs-row animate delay-1">
+    <div class="bug-card">
+      <h3>🔴 High Priority Defects</h3>
+      <div class="bug-item"><div class="bug-id">TC_09</div><div class="bug-desc">UI unresponsive across different screen sizes — layout breaks entirely</div></div>
+      <div class="bug-item"><div class="bug-id">TC_17</div><div class="bug-desc">Password reset code sent to invalid email format — no validation enforced</div></div>
+      <div class="bug-item"><div class="bug-id">TC_22</div><div class="bug-desc">Weak password accepted without any warning — critical security gap</div></div>
+      <div class="bug-item"><div class="bug-id">TC_35</div><div class="bug-desc">Cancel button shows no confirmation popup — data loss risk</div></div>
+      <div class="bug-item"><div class="bug-id">TC_27</div><div class="bug-desc">No character limit on goal input fields — can accept unlimited input</div></div>
+    </div>
+    <div class="bug-card">
+      <h3>🟡 Medium Priority Defects</h3>
+      <div class="bug-item"><div class="bug-id">TC_10</div><div class="bug-desc">Heading shows "Login" instead of "Sign Up" when New User is selected</div></div>
+      <div class="bug-item"><div class="bug-id">TC_14</div><div class="bug-desc">Confirm password placeholder text is not user-friendly or consistent</div></div>
+      <div class="bug-item"><div class="bug-id">TC_15</div><div class="bug-desc">Forgot Password link not hidden in New User registration mode</div></div>
+      <div class="bug-item"><div class="bug-id">TC_25</div><div class="bug-desc">No required/optional field indicators in Employee Information section</div></div>
+      <div class="bug-item"><div class="bug-id">TC_26</div><div class="bug-desc">No validation preventing back-dated entries in date picker field</div></div>
+      <div class="bug-item"><div class="bug-id">TC_30</div><div class="bug-desc">Tooltips on goal section buttons do not trigger on hover</div></div>
+      <div class="bug-item"><div class="bug-id">TC_34</div><div class="bug-desc">Remove goal icon is unclear and not user-friendly in design</div></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ FULL TABLE ══════════════════════ -->
+  <div class="section-title animate">Complete Test Case Matrix</div>
+  <div class="table-wrap animate delay-1">
+    <table>
+      <thead>
+        <tr>
+          <th>TC ID</th>
+          <th>Module</th>
+          <th>Sub-Module</th>
+          <th>Description</th>
+          <th>Severity</th>
+          <th>Priority</th>
+          <th>Pre-Condition</th>
+          <th>Test Steps (Summary)</th>
+          <th>Expected Result</th>
+          <th>Actual Result</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <!-- TC_01 -->
+        <tr>
+          <td class="tc-id">TC_01</td>
+          <td><span class="module-tag tag-login">Login</span></td>
+          <td>—</td>
+          <td class="desc-col">Login with valid credentials</td>
+          <td><span class="sev-badge sev-minor">Minor</span></td>
+          <td><span class="prio-badge prio-low">Low</span></td>
+          <td>User on login page</td>
+          <td class="steps-col">Open URL → Enter valid email/password → Click Login</td>
+          <td class="result-col">Validation message: "Please enter a valid email address"</td>
+          <td class="actual-col">Displayed validation message correctly</td>
+          <td><span class="status-badge s-pass"><span class="s-dot"></span>PASS</span></td>
+        </tr>
+
+        <!-- TC_02 -->
+        <tr>
+          <td class="tc-id">TC_02</td>
+          <td><span class="module-tag tag-login">Login</span></td>
+          <td>—</td>
+          <td class="desc-col">Login with invalid credentials</td>
+          <td><span class="sev-badge sev-minor">Minor</span></td>
+          <td><span class="prio-badge prio-low">Low</span></td>
+          <td>User on login page</td>
+          <td class="steps-col">Open URL → Enter invalid email/password → Click Login</td>
+          <td class="result-col">Error: "User not found or incorrect email"</td>
+          <td class="actual-col">POST Error shown: User not found or incorrect email</td>
+          <td><span class="status-badge s-pass"><span class="s-dot"></span>PASS</span></td>
+        </tr>
+
+        <!-- TC_03 -->
+        <tr>
+          <td class="tc-id">TC_03</td>
+          <td><span class="module-tag tag-login">Login</span></td>
+          <td>—</td>
+          <td class="desc-col">Login with invalid password</td>
+          <td><span class="sev-badge sev-minor">Minor</span></td>
+          <td><span class="prio-badge prio-low">Low</span></td>
+          <td>User on login page</td>
+          <td class="steps-col">Enter valid email → Enter wrong password → Click Login</td>
+          <td class="result-col">Error: "Incorrect password"</td>
+          <td class="actual-col">Displayed "Incorrect password"</td>
+          <td><span class="status-badge s-pass"><span class="s-dot"></span>PASS</span></td>
+        </tr>
+
+        <!-- TC_04 -->
+        <tr>
+          <td class="tc-id">TC_04</td>
+          <td><span class="module-tag tag-login">Login</span></td>
+          <td>—</td>
+          <td class="desc-col">Login with empty email field</td>
+          <td><span class="sev-badge sev-minor">Minor</span></td>
+          <td><span class="prio-badge prio-med">Med</span></td>
+          <td>User on login page</td>
+          <td class="steps-col">Leave email empty → Enter password → Click Login</td>
+          <td class="result-col">Required field validation message</td>
+          <td class="actual-col">Shows "Please enter email address"</td>
+          <td><span class="status-badge s-pass"><span class="s-dot"></span>PASS</span></td>
+        </tr>
+
+        <!-- TC_05 -->
+        <tr>
+          <td class="tc-id">TC_05</td>
+          <td><span class="module-tag tag-login">Login</span></td>
+          <td>—</td>
+          <td class="desc-col">Login with empty password field</td>
+          <td><span class="sev-badge sev-minor">Minor</span></td>
+          <td><span class="prio-badge prio-med">Med</span></td>
+          <td>User on login page</td>
+          <td class="steps-col">Enter email → Leave password empty → Click Login</td>
+          <td class="result-col">Required field validation message</td>
+          <td class="actual-col">Shows "Please enter the password"</td>
+          <td><span class="status-badge s-pass"><span class="s-dot"></span>PASS</span></td>
+        </tr>
+
+        <!-- TC_06 -->
+        <tr>
+          <td class="tc-id">TC_06</td>
+          <td><span class="module-tag tag-login">Login</span></td>
+          <td>—</td>
+          <td class="desc-col">Login with invalid email format</td>
+          <td><span class="sev-badge sev-minor">Minor</span></td>
+          <td><span class="prio-badge prio-low">Low</span></td>
+          <td>User on login page</td>
+          <td class="steps-col">Enter invalid email format → Enter password → Click Login</td>
+          <td class="result-col">Message: "Please enter a valid email address"</td>
+          <td class="actual-col">Shown "please enter a valid email address"</td>
+          <td><span class="status-badge s-pass"><span class="s-dot"></span>PASS</span></td>
+        </tr>
+
+        <!-- TC_07 -->
+        <tr>
+          <td class="tc-id">TC_07</td>
+          <td><span class="module-tag tag-login">Login</span></td>
+          <td>—</td>
+          <td class="desc-col">Login using Enter key</td>
+          <td><span class="sev-badge sev-minor">Minor</span></td>
+          <td><span class="prio-badge prio-low">Low</span></td>
+          <td>User on login page</td>
+          <td class="steps-col">Enter valid credentials → Press Enter key</td>
+          <td class="result-col">Enter key triggers login action</td>
+          <td class="actual-col">Login successful via Enter key</td>
+          <td><span class="status-badge s-pass"><span class="s-dot"></span>PASS</span></td>
+        </tr>
+
+        <!-- TC_08 -->
+        <tr>
+          <td class="tc-id">TC_08</td>
+          <td><span class="module-tag tag-login">Login</span></td>
+          <td>—</td>
+          <td class="desc-col">Session persistence after login</td>
+          <td><span class="sev-badge sev-major">Major</span></td>
+          <td><span class="prio-badge prio-med">Med</span></td>
+          <td>User on login page</td>
+          <td class="steps-col">Login successfully → Refresh page</td>
+          <td class="result-col">User session remains active</td>
+          <td class="actual-col">Session remains active after refresh</td>
+          <td><span class="status-badge s-pass"><span class="s-dot"></span>PASS</span></td>
+        </tr>
+
+        <!-- TC_09 FAIL -->
+        <tr>
+          <td class="tc-id">TC_09</td>
+          <td><span class="module-tag tag-login">Login</span></td>
+          <td>—</td>
+          <td class="desc-col">UI responsiveness across screen sizes</td>
+          <td><span class="sev-badge sev-critical">Critical</span></td>
+          <td><span class="prio-badge prio-high">High</span></td>
+          <td>User on login page</td>
+          <td class="steps-col">Open login page across different screen sizes</td>
+          <td class="result-col">UI displays properly without layout issues</td>
+          <td class="actual-col" style="color:var(--fail)">System was unresponsive</td>
+          <td><span class="status-badge s-fail"><span class="s-dot"></span>FAIL</span></td>
+        </tr>
+
+        <!-- TC_10 FAIL -->
+        <tr>
+          <td class="tc-id">TC_10</td>
+          <td><span class="module-tag tag-login">Login</span></td>
+          <td>New User</td>
+          <td class="desc-col">Sign Up heading shows after clicking "I'm a new user"</td>
+          <td><span class="sev-badge sev-major">Major</span></td>
+          <td><span class="prio-badge prio-high">High</span></td>
+          <td>User on new user page</td>
+          <td class="steps-col">Open URL → Login Page → Click "I'm a new user"</td>
+          <td class="result-col">Heading should display "Sign Up"</td>
+          <td class="actual-col" style="color:var(--fail)">Shows "Login" as heading instead</td>
+          <td><span class="status-badge s-fail"><span class="s-dot"></span>FAIL</span></td>
+        </tr>
+
+        <!-- TC_11 -->
+        <tr>
+          <td class="tc-id">TC_11</td>
+          <td><span class="module-tag tag-newuser">New User</span></td>
+          <td>—</td>
+          <td class="desc-col">New user with empty fields</td>
+          <td><span class="sev-badge sev-minor">Minor</span></td>
+          <td><span class="prio-badge prio-med">Med</span></td>
+          <td>User on new user page</td>
+          <td class="steps-col">Navigate to new user → No data input → Click Login</td>
+          <td class="result-col">Show: "Please fill out this field"</td>
+          <td class="actual-col">Shows validation message correctly</td>
+          <td><span class="status-badge s-pass"><span class="s-dot"></span>PASS</span></td>
+        </tr>
+
+        <!-- TC_12 -->
+        <tr>
+          <td class="tc-id">TC_12</td>
+          <td><span class="module-tag tag-newuser">New User</span></td>
+          <td>—</td>
+          <td class="desc-col">New user with empty password field</td>
+          <td><span class="sev-badge sev-minor">Minor</span></td>
+          <td><span class="prio-badge prio-med">Med</span></td>
+          <td>User on new user page</td>
+          <td class="steps-col">Enter email → No password → Click Login</td>
+          <td class="result-col">Show: "Please use a password"</td>
+          <td class="actual-col">Shows "Please fill this field"</td>
+          <td><span class="status-badge s-pass"><span class="s-dot"></span>PASS</span></td>
+        </tr>
+
+        <!-- TC_13 -->
+        <tr>
+          <td class="tc-id">TC_13</td>
+          <td><span class="module-tag tag-newuser">New User</span></td>
+          <td>—</td>
+          <td class="desc-col">New user without password confirmation</td>
+          <td><span class="sev-badge sev-major">Major</span></td>
+          <td><span class="prio-badge prio-high">High</span></td>
+          <td>User on new user page</td>
+          <td class="steps-col">Enter email + password → Skip confirm password → Submit</td>
+          <td class="result-col">Cannot create account without confirm password</td>
+          <td class="actual-col">Shows "Please fill this field" — blocked</td>
+          <td><span class="status-badge s-pass"><span class="s-dot"></span>PASS</span></td>
+        </tr>
+
+        <!-- TC_14 FAIL -->
+        <tr>
+          <td class="tc-id">TC_14</td>
+          <td><span class="module-tag tag-newuser">New User</span></td>
+          <td>—</td>
+          <td class="desc-col">Placeholder text is user-friendly</td>
+          <td><span class="sev-badge sev-minor">Minor</span></td>
+          <td><span class="prio-badge prio-med">Med</span></td>
+          <td>New user page visible</td>
+          <td class="steps-col">Navigate to new user → Inspect all input placeholders</td>
+          <td class="result-col">Placeholder text should be meaningful and consistent</td>
+          <td class="actual-col" style="color:var(--fail)">Confirm password placeholder reads "Confirm new password" — inconsistent</td>
+          <td><span class="status-badge s-fail"><span class="s-dot"></span>FAIL</span></td>
+        </tr>
+
+        <!-- TC_15 FAIL -->
+        <tr>
+          <td class="tc-id">TC_15</td>
+          <td><span class="module-tag tag-newuser">New User</span></td>
+          <td>—</td>
+          <td class="desc-col">Forgot Password link hidden in New User mode</td>
+          <td><span class="sev-badge sev-major">Major</span></td>
+          <td><span class="prio-badge prio-high">High</span></td>
+          <td>User on new user page</td>
+          <td class="steps-col">Click "I'm a new user"</td>
+          <td class="result-col">Forgot Password link should be hidden</td>
+          <td class="actual-col" style="color:var(--fail)">Forgot Password link still visible in New User mode</td>
+          <td><span class="status-badge s-fail"><span class="s-dot"></span>FAIL</span></td>
+        </tr>
+
+        <!-- TC_16 -->
+        <tr>
+          <td class="tc-id">TC_16</td>
+          <td><span class="module-tag tag-forgot">Forgot Pwd</span></td>
+          <td>—</td>
+          <td class="desc-col">Reset password with blank email</td>
+          <td><span class="sev-badge sev-minor">Minor</span></td>
+          <td><span class="prio-badge prio-med">Med</span></td>
+          <td>User on forgot password section</td>
+          <td class="steps-col">Click Forgot Password → Leave email blank → Click Send Code</td>
+          <td class="result-col">Show: "Please enter an email address"</td>
+          <td class="actual-col">Shows "Please enter an email address"</td>
+          <td><span class="status-badge s-pass"><span class="s-dot"></span>PASS</span></td>
+        </tr>
+
+        <!-- TC_17 FAIL -->
+        <tr>
+          <td class="tc-id">TC_17</td>
+          <td><span class="module-tag tag-forgot">Forgot Pwd</span></td>
+          <td>—</td>
+          <td class="desc-col">Reset password with invalid email format</td>
+          <td><span class="sev-badge sev-critical">Critical</span></td>
+          <td><span class="prio-badge prio-high">High</span></td>
+          <td>User on forgot password section</td>
+          <td class="steps-col">Click Forgot Password → Enter invalid email → Click Send Code</td>
+          <td class="result-col">Show: "Please enter a valid email address"</td>
+          <td class="actual-col" style="color:var(--fail)">Password reset code sent to invalid email — no format check</td>
+          <td><span class="status-badge s-fail"><span class="s-dot"></span>FAIL</span></td>
+        </tr>
+
+        <!-- TC_18 -->
+        <tr>
+          <td class="tc-id">TC_18</td>
+          <td><span class="module-tag tag-forgot">Forgot Pwd</span></td>
+          <td>—</td>
+          <td class="desc-col">Reset password with valid email</td>
+          <td><span class="sev-badge sev-minor">Minor</span></td>
+          <td><span class="prio-badge prio-low">Low</span></td>
+          <td>User on forgot password section</td>
+          <td class="steps-col">Click Forgot Password → Enter valid email → Click Send Code</td>
+          <td class="result-col">Verification code sent to email</td>
+          <td class="actual-col">Verification code sent successfully</td>
+          <td><span class="status-badge s-pass"><span class="s-dot"></span>PASS</span></td>
+        </tr>
+
+        <!-- TC_19 -->
+        <tr>
+          <td class="tc-id">TC_19</td>
+          <td><span class="module-tag tag-verify">Verify & Set</span></td>
+          <td>—</td>
+          <td class="desc-col">Verify with invalid verification code</td>
+          <td><span class="sev-badge sev-major">Major</span></td>
+          <td><span class="prio-badge prio-med">Med</span></td>
+          <td>User in Verify & Set Password section</td>
+          <td class="steps-col">Enter invalid verification code → Attempt verification</td>
+          <td class="result-col">Show: "Invalid Verification Code"</td>
+          <td class="actual-col">Invalid verification message shown</td>
+          <td><span class="status-badge s-pass"><span class="s-dot"></span>PASS</span></td>
+        </tr>
+
+        <!-- TC_20 -->
+        <tr>
+          <td class="tc-id">TC_20</td>
+          <td><span class="module-tag tag-verify">Verify & Set</span></td>
+          <td>—</td>
+          <td class="desc-col">Valid code with empty new password</td>
+          <td><span class="sev-badge sev-major">Major</span></td>
+          <td><span class="prio-badge prio-med">Med</span></td>
+          <td>User in Verify & Set Password section</td>
+          <td class="steps-col">Enter valid code → Skip new password → Click Reset</td>
+          <td class="result-col">Show: "Please set a new password first"</td>
+          <td class="actual-col">Shows "Please fill out the password field"</td>
+          <td><span class="status-badge s-pass"><span class="s-dot"></span>PASS</span></td>
+        </tr>
+
+        <!-- TC_21 -->
+        <tr>
+          <td class="tc-id">TC_21</td>
+          <td><span class="module-tag tag-verify">Verify & Set</span></td>
+          <td>—</td>
+          <td class="desc-col">Mismatched confirm password</td>
+          <td><span class="sev-badge sev-major">Major</span></td>
+          <td><span class="prio-badge prio-med">Med</span></td>
+          <td>User in Verify & Set Password section</td>
+          <td class="steps-col">Valid code → Set password → Enter different confirm password</td>
+          <td class="result-col">Show: "Passwords do not match"</td>
+          <td class="actual-col">Shows "The password does not match"</td>
+          <td><span class="status-badge s-pass"><span class="s-dot"></span>PASS</span></td>
+        </tr>
+
+        <!-- TC_22 FAIL -->
+        <tr>
+          <td class="tc-id">TC_22</td>
+          <td><span class="module-tag tag-verify">Verify & Set</span></td>
+          <td>—</td>
+          <td class="desc-col">Weak password validation</td>
+          <td><span class="sev-badge sev-critical">Critical</span></td>
+          <td><span class="prio-badge prio-high">High</span></td>
+          <td>User in Verify & Set Password section</td>
+          <td class="steps-col">Enter valid code → Set weak password (e.g. 111111) → Click Reset</td>
+          <td class="result-col">System should warn about weak password</td>
+          <td class="actual-col" style="color:var(--fail)">Password set successfully — no weakness check at all</td>
+          <td><span class="status-badge s-fail"><span class="s-dot"></span>FAIL</span></td>
+        </tr>
+
+        <!-- TC_23 -->
+        <tr>
+          <td class="tc-id">TC_23</td>
+          <td><span class="module-tag tag-verify">Verify & Set</span></td>
+          <td>—</td>
+          <td class="desc-col">Verification code expiry</td>
+          <td><span class="sev-badge sev-major">Major</span></td>
+          <td><span class="prio-badge prio-high">High</span></td>
+          <td>Code sent; expiry time defined (10 min)</td>
+          <td class="steps-col">Send code → Wait for expiry → Use expired code</td>
+          <td class="result-col">Show: "Code has expired. Please request a new one."</td>
+          <td class="actual-col">System displayed "expired" message</td>
+          <td><span class="status-badge s-pass"><span class="s-dot"></span>PASS</span></td>
+        </tr>
+
+        <!-- TC_24 -->
+        <tr>
+          <td class="tc-id">TC_24</td>
+          <td><span class="module-tag tag-appraisal">Appraisal</span></td>
+          <td>Employee Info</td>
+          <td class="desc-col">Submit with empty employee info</td>
+          <td><span class="sev-badge sev-major">Major</span></td>
+          <td><span class="prio-badge prio-med">Med</span></td>
+          <td>User on Appraisal section</td>
+          <td class="steps-col">Start new appraisal → Leave info empty → Click Submit to Manager</td>
+          <td class="result-col">Validation message on required fields</td>
+          <td class="actual-col">Validation message appears correctly</td>
+          <td><span class="status-badge s-pass"><span class="s-dot"></span>PASS</span></td>
+        </tr>
+
+        <!-- TC_25 FAIL -->
+        <tr>
+          <td class="tc-id">TC_25</td>
+          <td><span class="module-tag tag-appraisal">Appraisal</span></td>
+          <td>Employee Info</td>
+          <td class="desc-col">Required field indicators in employee info</td>
+          <td><span class="sev-badge sev-major">Major</span></td>
+          <td><span class="prio-badge prio-high">High</span></td>
+          <td>User on Appraisal section</td>
+          <td class="steps-col">Start new appraisal → Review employee info section</td>
+          <td class="result-col">Required/optional fields should be clearly marked</td>
+          <td class="actual-col" style="color:var(--fail)">No required field indicators shown at all</td>
+          <td><span class="status-badge s-fail"><span class="s-dot"></span>FAIL</span></td>
+        </tr>
+
+        <!-- TC_26 FAIL -->
+        <tr>
+          <td class="tc-id">TC_26</td>
+          <td><span class="module-tag tag-appraisal">Appraisal</span></td>
+          <td>Employee Info</td>
+          <td class="desc-col">Date field rejects backdated entries</td>
+          <td><span class="sev-badge sev-major">Major</span></td>
+          <td><span class="prio-badge prio-high">High</span></td>
+          <td>User on Appraisal section</td>
+          <td class="steps-col">Start new appraisal → Enter backdated (28-08-1997) → Submit</td>
+          <td class="result-col">Error: "Please enter current date"</td>
+          <td class="actual-col" style="color:var(--fail)">No validation message — backdated entry accepted</td>
+          <td><span class="status-badge s-fail"><span class="s-dot"></span>FAIL</span></td>
+        </tr>
+
+        <!-- TC_27 FAIL -->
+        <tr>
+          <td class="tc-id">TC_27</td>
+          <td><span class="module-tag tag-goals">My Goals</span></td>
+          <td>—</td>
+          <td class="desc-col">Character limit on goal section</td>
+          <td><span class="sev-badge sev-major">Major</span></td>
+          <td><span class="prio-badge prio-high">High</span></td>
+          <td>User on Appraisal section</td>
+          <td class="steps-col">Start appraisal → Open My Goals → Type in goal fields</td>
+          <td class="result-col">Each goal should enforce character limit</td>
+          <td class="actual-col" style="color:var(--fail)">No character limit exists on goal section</td>
+          <td><span class="status-badge s-fail"><span class="s-dot"></span>FAIL</span></td>
+        </tr>
+
+        <!-- TC_28 -->
+        <tr>
+          <td class="tc-id">TC_28</td>
+          <td><span class="module-tag tag-goals">My Goals</span></td>
+          <td>—</td>
+          <td class="desc-col">Add new goal section</td>
+          <td><span class="sev-badge sev-minor">Minor</span></td>
+          <td><span class="prio-badge prio-low">Low</span></td>
+          <td>User on Appraisal section</td>
+          <td class="steps-col">Start appraisal → My Goals → Click "Add New Goal"</td>
+          <td class="result-col">New goal section is added</td>
+          <td class="actual-col">New goal added successfully</td>
+          <td><span class="status-badge s-pass"><span class="s-dot"></span>PASS</span></td>
+        </tr>
+
+        <!-- TC_29 -->
+        <tr>
+          <td class="tc-id">TC_29</td>
+          <td><span class="module-tag tag-goals">My Goals</span></td>
+          <td>—</td>
+          <td class="desc-col">Remove a goal</td>
+          <td><span class="sev-badge sev-minor">Minor</span></td>
+          <td><span class="prio-badge prio-low">Low</span></td>
+          <td>User on Appraisal section</td>
+          <td class="steps-col">Start appraisal → Add goal → Click Remove button</td>
+          <td class="result-col">Goal is removed on click</td>
+          <td class="actual-col">Removed successfully</td>
+          <td><span class="status-badge s-pass"><span class="s-dot"></span>PASS</span></td>
+        </tr>
+
+        <!-- TC_30 FAIL -->
+        <tr>
+          <td class="tc-id">TC_30</td>
+          <td><span class="module-tag tag-goals">My Goals</span></td>
+          <td>—</td>
+          <td class="desc-col">Tooltips work on hover</td>
+          <td><span class="sev-badge sev-minor">Minor</span></td>
+          <td><span class="prio-badge prio-med">Med</span></td>
+          <td>User on Appraisal section</td>
+          <td class="steps-col">Start appraisal → My Goals → Hover over remove button</td>
+          <td class="result-col">Tooltip appears on hover</td>
+          <td class="actual-col" style="color:var(--fail)">Tooltips did not trigger on hover</td>
+          <td><span class="status-badge s-fail"><span class="s-dot"></span>FAIL</span></td>
+        </tr>
+
+        <!-- TC_31 -->
+        <tr>
+          <td class="tc-id">TC_31</td>
+          <td><span class="module-tag tag-goals">My Goals</span></td>
+          <td>—</td>
+          <td class="desc-col">Goals with empty data — submit</td>
+          <td><span class="sev-badge sev-minor">Minor</span></td>
+          <td><span class="prio-badge prio-low">Low</span></td>
+          <td>User on Appraisal section</td>
+          <td class="steps-col">Start appraisal → Leave goals blank → Submit to manager</td>
+          <td class="result-col">Continues without error when no data</td>
+          <td class="actual-col">Proceeds successfully without data</td>
+          <td><span class="status-badge s-pass"><span class="s-dot"></span>PASS</span></td>
+        </tr>
+
+        <!-- TC_32 -->
+        <tr>
+          <td class="tc-id">TC_32</td>
+          <td><span class="module-tag tag-goals">My Goals</span></td>
+          <td>—</td>
+          <td class="desc-col">Goals with valid data — submit</td>
+          <td><span class="sev-badge sev-minor">Minor</span></td>
+          <td><span class="prio-badge prio-low">Low</span></td>
+          <td>User on Appraisal section</td>
+          <td class="steps-col">Start appraisal → Enter valid goals → Submit to manager</td>
+          <td class="result-col">Continues processing with data</td>
+          <td class="actual-col">Process continues with valid data</td>
+          <td><span class="status-badge s-pass"><span class="s-dot"></span>PASS</span></td>
+        </tr>
+
+        <!-- TC_33 -->
+        <tr>
+          <td class="tc-id">TC_33</td>
+          <td><span class="module-tag tag-goals">My Goals</span></td>
+          <td>—</td>
+          <td class="desc-col">Remove icon removes goals correctly</td>
+          <td><span class="sev-badge sev-minor">Minor</span></td>
+          <td><span class="prio-badge prio-low">Low</span></td>
+          <td>User on Appraisal section</td>
+          <td class="steps-col">Add 2–3 goals → Click remove icon on each</td>
+          <td class="result-col">Goal removed on icon click</td>
+          <td class="actual-col">Goal removed successfully</td>
+          <td><span class="status-badge s-pass"><span class="s-dot"></span>PASS</span></td>
+        </tr>
+
+        <!-- TC_34 FAIL -->
+        <tr>
+          <td class="tc-id">TC_34</td>
+          <td><span class="module-tag tag-goals">My Goals</span></td>
+          <td>—</td>
+          <td class="desc-col">Remove icon visibility and friendliness</td>
+          <td><span class="sev-badge sev-minor">Minor</span></td>
+          <td><span class="prio-badge prio-med">Med</span></td>
+          <td>User on Appraisal section</td>
+          <td class="steps-col">Add 2–3 goals → Inspect remove icon UI</td>
+          <td class="result-col">Remove icon should be clear and user-friendly</td>
+          <td class="actual-col" style="color:var(--fail)">Remove icon unclear and not user-friendly</td>
+          <td><span class="status-badge s-fail"><span class="s-dot"></span>FAIL</span></td>
+        </tr>
+
+        <!-- TC_35 FAIL -->
+        <tr>
+          <td class="tc-id">TC_35</td>
+          <td><span class="module-tag tag-goals">My Goals</span></td>
+          <td>—</td>
+          <td class="desc-col">Cancel button shows confirmation popup</td>
+          <td><span class="sev-badge sev-critical">Critical</span></td>
+          <td><span class="prio-badge prio-high">High</span></td>
+          <td>User on Appraisal section</td>
+          <td class="steps-col">Type in fields → Click Cancel button</td>
+          <td class="result-col">Show: "Are you sure you want to cancel?"</td>
+          <td class="actual-col" style="color:var(--fail)">No cancel confirmation popup appears — data loss risk</td>
+          <td><span class="status-badge s-fail"><span class="s-dot"></span>FAIL</span></td>
+        </tr>
+
+        <!-- TC_36 -->
+        <tr>
+          <td class="tc-id">TC_36</td>
+          <td><span class="module-tag tag-goals">My Goals</span></td>
+          <td>—</td>
+          <td class="desc-col">Submit to manager button functions correctly</td>
+          <td><span class="sev-badge sev-major">Major</span></td>
+          <td><span class="prio-badge prio-high">High</span></td>
+          <td>User on Appraisal section</td>
+          <td class="steps-col">Click "Submit to Manager" button</td>
+          <td class="result-col">Button works and shows success message</td>
+          <td class="actual-col">Submit to manager works correctly</td>
+          <td><span class="status-badge s-pass"><span class="s-dot"></span>PASS</span></td>
+        </tr>
+
+        <!-- TC_37 -->
+        <tr>
+          <td class="tc-id">TC_37</td>
+          <td><span class="module-tag tag-home">Home Page</span></td>
+          <td>—</td>
+          <td class="desc-col">Log out button works correctly</td>
+          <td><span class="sev-badge sev-major">Major</span></td>
+          <td><span class="prio-badge prio-high">High</span></td>
+          <td>User on Home page</td>
+          <td class="steps-col">Click Log Out button</td>
+          <td class="result-col">User is logged out and redirected to Login</td>
+          <td class="actual-col">Logout successful, redirected to login page</td>
+          <td><span class="status-badge s-pass"><span class="s-dot"></span>PASS</span></td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  Generated by <strong>Senior QA Engineer Report System</strong> · SQA Performance Appraisal · 03.03.2026 · Chrome 145 / Windows 11
+</div>
+
+</body>
+</html>
